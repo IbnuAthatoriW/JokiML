@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Order;
+use App\Models\Jasa;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class OrderController extends Controller
+{
+    public function index()
+    {
+        // Admin sees all orders, user sees their own
+        if (Auth::user()->role === 'admin') {
+            $orders = Order::latest()->get();
+        } else {
+            $orders = Order::where('user_id', Auth::id())->latest()->get();
+        }
+        return view('order.index', compact('orders'));
+    }
+
+    public function init(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:paket,custom',
+            'price' => 'required|numeric|min:1',
+            'paket_name' => 'nullable|string',
+            'from_rank' => 'nullable|string',
+            'to_rank' => 'nullable|string',
+            'from_star' => 'nullable|numeric',
+            'to_star' => 'nullable|numeric',
+        ]);
+
+        $request->session()->put('order_init', $request->except('_token'));
+        
+        if (!Auth::check()) {
+            session()->put('url.intended', route('order.data'));
+            return redirect()->route('login');
+        }
+        
+        return redirect()->route('order.data');
+    }
+
+    public function dataForm(Request $request)
+    {
+        if (!$request->session()->has('order_init')) {
+            return redirect()->route('home');
+        }
+        
+        $orderData = $request->session()->get('order_init');
+        return view('order.data', compact('orderData'));
+    }
+
+    public function process(Request $request)
+    {
+        if (!$request->session()->has('order_init')) {
+            return redirect()->route('home');
+        }
+        $orderData = $request->session()->get('order_init');
+
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'game_id' => 'required|string|max:255',
+            'moonton_account' => 'required|string|max:255',
+            'moonton_password' => 'required|string|max:255',
+            'hero_request' => 'nullable|string|max:255',
+            'whatsapp' => 'required|string|max:20',
+        ]);
+
+        $finalData = array_merge($orderData, $validated);
+        $request->session()->put('order_final', $finalData);
+
+        return redirect()->route('order.payment');
+    }
+
+    public function payment(Request $request)
+    {
+        if (!$request->session()->has('order_final')) {
+            return redirect()->route('home');
+        }
+        $orderData = $request->session()->get('order_final');
+        return view('order.payment', compact('orderData'));
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        if (!$request->session()->has('order_final')) {
+            return redirect()->route('home');
+        }
+        $data = $request->session()->get('order_final');
+
+        Order::create([
+            'user_id' => Auth::id(),
+            'type' => $data['type'],
+            'paket_name' => $data['paket_name'] ?? null,
+            'from_rank' => $data['from_rank'] ?? null,
+            'to_rank' => $data['to_rank'] ?? null,
+            'from_star' => $data['from_star'] ?? null,
+            'to_star' => $data['to_star'] ?? null,
+            'price' => $data['price'],
+            'status' => 'pending',
+            'payment_status' => 'unpaid', // Actually we can set it to 'verified' or 'pending verification' since they just clicked I already paid.
+            'customer_name' => $data['customer_name'],
+            'game_id' => $data['game_id'],
+            'moonton_account' => $data['moonton_account'],
+            'moonton_password' => $data['moonton_password'],
+            'hero_request' => $data['hero_request'],
+            'whatsapp' => $data['whatsapp'],
+        ]);
+        
+        $request->session()->forget('order_init');
+        $request->session()->forget('order_final');
+
+        return redirect()->route('dashboard')->with('success', 'Pembayaran sedang diverifikasi! Order Anda akan segera diproses.');
+    }
+
+    public function storeTestimonial(Request $request)
+    {
+        $request->validate([
+            'content' => 'required|string|max:500',
+            'rating' => 'required|integer|min:1|max:5',
+        ]);
+
+        \App\Models\Testimonial::create([
+            'user_id' => Auth::id(),
+            'content' => $request->content,
+            'rating' => $request->rating,
+        ]);
+
+        return back()->with('success', 'Terima kasih atas ulasan Anda!');
+    }
+}

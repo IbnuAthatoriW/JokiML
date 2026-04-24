@@ -1,0 +1,261 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Google Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ===== Base Styles ===== */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #0a0a1a;
+        color: #e2e8f0;
+    }
+
+    ::selection {
+        background-color: rgba(0, 212, 255, 0.3);
+        color: #ffffff;
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #0a0a1a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #6366f1, #a855f7);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #818cf8, #c084fc);
+    }
+}
+
+/* ===== Component Styles ===== */
+@layer components {
+    /* Glassmorphism Card */
+    .glass-card {
+        @apply relative rounded-2xl border border-white/10;
+        background: rgba(15, 15, 46, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+
+    /* Neon Button */
+    .btn-neon {
+        @apply relative px-8 py-3 font-semibold text-white rounded-xl overflow-hidden transition-all duration-300;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-neon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 0 60px rgba(168, 85, 247, 0.2);
+    }
+
+    .btn-neon::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent,
+            rgba(255,255,255,0.05),
+            transparent
+        );
+        transform: rotate(45deg);
+        transition: all 0.5s;
+    }
+
+    .btn-neon:hover::after {
+        left: 100%;
+    }
+
+    /* Neon Text */
+    .text-neon {
+        background: linear-gradient(135deg, #00d4ff, #a855f7, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .text-neon-blue {
+        background: linear-gradient(135deg, #00d4ff, #6366f1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Gaming Card */
+    .gaming-card {
+        @apply glass-card p-6 transition-all duration-500;
+    }
+
+    .gaming-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.2), 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Package Card */
+    .package-card {
+        @apply gaming-card relative overflow-visible;
+    }
+
+    .package-card .package-badge {
+        @apply absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap z-10;
+        background: linear-gradient(135deg, #ec4899, #a855f7);
+        box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+    }
+
+    /* Navbar */
+    .nav-gaming {
+        @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300;
+        background: rgba(10, 10, 26, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-gaming.scrolled {
+        background: rgba(10, 10, 26, 0.95);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Section Title */
+    .section-title {
+        @apply text-3xl md:text-4xl font-bold text-center mb-4;
+    }
+
+    .section-subtitle {
+        @apply text-gray-400 text-center mb-12 max-w-2xl mx-auto;
+    }
+
+    /* Star Rating */
+    .star-rating {
+        @apply flex gap-1;
+        color: #fbbf24;
+    }
+
+    /* Accordion */
+    .accordion-item {
+        @apply glass-card mb-3 overflow-hidden;
+    }
+
+    .accordion-header {
+        @apply w-full flex items-center justify-between p-5 text-left font-semibold text-white hover:text-neon-blue transition-colors cursor-pointer;
+        background: transparent;
+        border: none;
+    }
+
+    .accordion-header:hover {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .accordion-content {
+        @apply px-5 pb-5 text-gray-400;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+
+    .accordion-content.active {
+        max-height: 300px;
+        padding-bottom: 1.25rem;
+    }
+
+    .accordion-icon {
+        @apply transition-transform duration-300;
+    }
+
+    .accordion-icon.active {
+        transform: rotate(180deg);
+    }
+
+    /* Background Orbs */
+    .bg-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+        pointer-events: none;
+    }
+
+    .bg-orb-blue {
+        background: #00d4ff;
+    }
+
+    .bg-orb-purple {
+        background: #a855f7;
+    }
+
+    .bg-orb-pink {
+        background: #ec4899;
+    }
+
+    /* Particle Grid Background */
+    .bg-grid {
+        background-image:
+            linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+    }
+
+    /* Badge */
+    .badge-feature {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        color: #a5b4fc;
+    }
+
+    /* Divider */
+    .divider-neon {
+        @apply w-20 h-1 mx-auto rounded-full mb-6;
+        background: linear-gradient(90deg, #00d4ff, #a855f7);
+    }
+}
+
+/* ===== Utility Animations ===== */
+@layer utilities {
+    .animate-delay-100 {
+        animation-delay: 100ms;
+    }
+    .animate-delay-200 {
+        animation-delay: 200ms;
+    }
+    .animate-delay-300 {
+        animation-delay: 300ms;
+    }
+    .animate-delay-400 {
+        animation-delay: 400ms;
+    }
+    .animate-delay-500 {
+        animation-delay: 500ms;
+    }
+    .animate-delay-600 {
+        animation-delay: 600ms;
+    }
+}
