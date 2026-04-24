@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Route;
 
 // Halaman utama (publik, tidak perlu login)
 Route::get('/', function () {
-    return view('jasa.index');
+    $testimonials = \App\Models\Testimonial::with('user')->latest()->take(6)->get();
+    return view('jasa.index', compact('testimonials'));
 })->name('home');
 
 // Dashboard (harus login)
@@ -41,9 +42,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/order/process', [\App\Http\Controllers\OrderController::class, 'process'])->name('order.process');
     Route::get('/order/payment', [\App\Http\Controllers\OrderController::class, 'payment'])->name('order.payment');
     Route::post('/order/confirm', [\App\Http\Controllers\OrderController::class, 'confirmPayment'])->name('order.confirm');
+    Route::patch('/order/{order}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus'])->name('order.status');
     
     // Testimonials
     Route::post('/testimonials', [\App\Http\Controllers\OrderController::class, 'storeTestimonial'])->name('testimonial.store');
+    Route::delete('/testimonials/{testimonial}', [\App\Http\Controllers\OrderController::class, 'destroyTestimonial'])->name('testimonial.destroy');
+    Route::post('/testimonials/{testimonial}/reply', [\App\Http\Controllers\OrderController::class, 'replyTestimonial'])->name('testimonial.reply');
 
     // Admin Settings
     Route::post('/admin/settings', function (Illuminate\Http\Request $request) {

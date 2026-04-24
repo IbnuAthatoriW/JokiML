@@ -382,38 +382,31 @@
             <p class="section-subtitle">Testimoni dari pelanggan yang sudah menggunakan jasa kami</p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @php
-                $testimonials = [
-                    ['name'=>'Andi Pratama','rank_before'=>'Grandmaster','rank_after'=>'Epic','comment'=>'Mantap banget! Cuma 2 hari udah sampai Epic. Joki-nya pro dan akun aman.','stars'=>5,'avatar'=>'A'],
-                    ['name'=>'Siti Nurhaliza','rank_before'=>'Epic','rank_after'=>'Legend','comment'=>'Pelayanan ramah, fast response. Akun ga kena ban. Recommended!','stars'=>5,'avatar'=>'S'],
-                    ['name'=>'Budi Santoso','rank_before'=>'Legend','rank_after'=>'Mythic','comment'=>'Akhirnya sampai Mythic juga! Worth it banget harganya.','stars'=>5,'avatar'=>'B'],
-                    ['name'=>'Dewi Lestari','rank_before'=>'Warrior','rank_after'=>'Elite','comment'=>'Proses cepat dan admin sangat helpful. Pasti order lagi!','stars'=>4,'avatar'=>'D'],
-                    ['name'=>'Rizky Fauzan','rank_before'=>'Master','rank_after'=>'Grandmaster','comment'=>'Harga murah tapi kualitas premium. Ga nyesel pake jasa ini.','stars'=>5,'avatar'=>'R'],
-                    ['name'=>'Maya Sari','rank_before'=>'Epic','rank_after'=>'Legend','comment'=>'Udah 3x order di sini, selalu puas. Joki-nya jago banget!','stars'=>5,'avatar'=>'M'],
-                ];
-                @endphp
-
-                @foreach($testimonials as $t)
-                <div class="gaming-card">
+                @forelse($testimonials as $t)
+                <div class="gaming-card relative">
                     <div class="flex items-center gap-4 mb-4">
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gaming-500 to-neon-purple flex items-center justify-center text-white font-bold text-lg">
-                            {{ $t['avatar'] }}
+                            {{ strtoupper(substr($t->user->name, 0, 2)) }}
                         </div>
                         <div>
-                            <h4 class="font-semibold text-white">{{ $t['name'] }}</h4>
-                            <span class="text-xs px-2 py-1 rounded-full bg-gaming-500/20 text-gaming-300">
-                                {{ $t['rank_before'] }} → {{ $t['rank_after'] }}
-                            </span>
+                            <h4 class="font-semibold text-white">{{ $t->user->name }}</h4>
+                            <div class="text-yellow-400 text-xs">
+                                @for($i=0; $i<$t->rating; $i++) ⭐ @endfor
+                            </div>
                         </div>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3 italic">"{{ $t['comment'] }}"</p>
-                    <div class="star-rating">
-                        @for($s = 0; $s < $t['stars']; $s++)
-                            <span>⭐</span>
-                        @endfor
-                    </div>
+                    <p class="text-gray-400 text-sm mb-3 italic">"{{ $t->content }}"</p>
+                    
+                    @if($t->reply)
+                        <div class="mt-4 p-3 bg-dark-800/80 rounded-xl border border-gaming-500/30">
+                            <p class="text-xs font-bold text-neon-blue mb-1">Admin Reply:</p>
+                            <p class="text-gray-300 text-xs">{{ $t->reply }}</p>
+                        </div>
+                    @endif
                 </div>
-                @endforeach
+                @empty
+                    <div class="col-span-3 text-center text-gray-500 py-4">Belum ada testimoni.</div>
+                @endforelse
             </div>
         </div>
     </section>
@@ -466,7 +459,7 @@
                         </div>
                         <span class="text-xl font-bold text-neon">JokiML</span>
                     </div>
-                    <p class="text-gray-400 text-sm leading-relaxed">Jasa joki Mobile Legends profesional, aman, dan terpercaya. Melayani ribuan customer sejak 2022.</p>
+                    <p class="text-gray-400 text-sm leading-relaxed">Jasa joki Mobile Legends profesional, aman, dan terpercaya. Melayani ribuan customer sejak 2026.</p>
                 </div>
 
                 {{-- Links --}}

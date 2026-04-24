@@ -100,7 +100,7 @@ class OrderController extends Controller
             'to_star' => $data['to_star'] ?? null,
             'price' => $data['price'],
             'status' => 'pending',
-            'payment_status' => 'unpaid', // Actually we can set it to 'verified' or 'pending verification' since they just clicked I already paid.
+            'payment_status' => 'sudah dibayar', // Actually we can set it to 'verified' or 'pending verification' since they just clicked I already paid.
             'customer_name' => $data['customer_name'],
             'game_id' => $data['game_id'],
             'moonton_account' => $data['moonton_account'],
@@ -129,5 +129,41 @@ class OrderController extends Controller
         ]);
 
         return back()->with('success', 'Terima kasih atas ulasan Anda!');
+    }
+
+    public function updateStatus(Request $request, Order $order)
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,on progress,selesai',
+        ]);
+
+        $order->update(['status' => $request->status]);
+
+        return back()->with('success', 'Status order berhasil diupdate!');
+    }
+
+    public function destroyTestimonial(\App\Models\Testimonial $testimonial)
+    {
+        if (Auth::user()->role !== 'admin' && Auth::id() !== $testimonial->user_id) {
+            abort(403);
+        }
+        $testimonial->delete();
+        return back()->with('success', 'Testimoni berhasil dihapus!');
+    }
+
+    public function replyTestimonial(Request $request, \App\Models\Testimonial $testimonial)
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+        $request->validate([
+            'reply' => 'required|string|max:500'
+        ]);
+        $testimonial->update(['reply' => $request->reply]);
+        return back()->with('success', 'Balasan berhasil dikirim!');
     }
 }

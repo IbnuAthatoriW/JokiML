@@ -110,8 +110,8 @@
                                     <td class="py-3 px-4">
                                         @if($o->payment_status === 'unpaid')
                                             <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-md text-xs">Unpaid</span>
-                                        @elseif($o->payment_status === 'verified')
-                                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-md text-xs">Verified</span>
+                                        @elseif($o->payment_status === 'verified' || $o->payment_status === 'sudah dibayar')
+                                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-md text-xs">{{ ucfirst($o->payment_status) }}</span>
                                         @else
                                             <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-md text-xs">{{ $o->payment_status }}</span>
                                         @endif
@@ -121,9 +121,19 @@
                                     </td>
                                     <td class="py-3 px-4">
                                         @if($o->payment_status === 'unpaid' && Auth::id() === $o->user_id)
-                                            <a href="{{ route('order.payment', $o->id) }}" class="text-xs bg-neon-purple text-white px-3 py-1 rounded-md hover:bg-purple-600 transition">Bayar</a>
+                                            <a href="{{ route('order.payment', $o->id) }}" class="text-xs bg-neon-purple text-white px-3 py-1 rounded-md hover:bg-purple-600 transition inline-block mb-1">Bayar</a>
                                         @endif
-                                        @if(Auth::user()->role === 'admin' && $o->status === 'processing')
+                                        @if(Auth::user()->role === 'admin')
+                                            <form action="{{ route('order.status', $o->id) }}" method="POST" class="inline-block mt-1">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="status" onchange="this.form.submit()" class="text-xs bg-dark-800 border-white/10 text-white rounded-md p-1">
+                                                    <option value="pending" {{ $o->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="on progress" {{ $o->status === 'on progress' ? 'selected' : '' }}>On Progress</option>
+                                                    <option value="selesai" {{ $o->status === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                </select>
+                                            </form>
+                                        @elseif($o->status === 'processing' || $o->status === 'on progress')
                                             <span class="text-xs text-gray-500">Proses...</span>
                                         @endif
                                     </td>
@@ -206,6 +216,7 @@
             @endif
 
             {{-- Paket Joki Grid --}}
+            @if(Auth::user()->role !== 'admin')
             <div>
                 <div class="divider-neon"></div>
                 <h2 class="section-title text-white">Paket <span class="text-neon">Joki Rank</span></h2>
@@ -216,14 +227,16 @@
                     $pakets = [
                         ['from'=>'Grandmaster','to'=>'Epic','price'=>'Rp '.number_format($priceP1, 0, ',', '.'),'raw_price'=>$priceP1,'color'=>'from-purple-500 to-pink-400','icon'=>'💎'],
                         ['from'=>'Epic','to'=>'Legend','price'=>'Rp '.number_format($priceP2, 0, ',', '.'),'raw_price'=>$priceP2,'color'=>'from-orange-500 to-red-400','icon'=>'🔥'],
-                        ['from'=>'Legend','to'=>'Mythic','price'=>'Rp '.number_format($priceP3, 0, ',', '.'),'raw_price'=>$priceP3,'color'=>'from-red-500 to-pink-500','icon'=>'👑'],
+                        ['from'=>'Legend','to'=>'Mythic','price'=>'Rp '.number_format($priceP3, 0, ',', '.'),'raw_price'=>$priceP3,'color'=>'from-red-500 to-pink-500','icon'=>'👑','popular'=>true],
                     ];
                     @endphp
 
                     @foreach($pakets as $p)
                     <div class="package-card group">
-                        <div class="package-badge">🔥 Terpopuler</div>
-                        <div class="flex items-center gap-3 mb-4 mt-2">
+                        @if(!empty($p['popular']))
+                            <div class="package-badge">🔥 Terpopuler</div>
+                        @endif
+                        <div class="flex items-center gap-3 mb-4 {{ !empty($p['popular']) ? 'mt-4' : 'mt-2' }}">
                             <div class="w-12 h-12 rounded-xl bg-gradient-to-br {{ $p['color'] }} flex items-center justify-center text-2xl shadow-lg">
                                 {{ $p['icon'] }}
                             </div>
@@ -251,6 +264,7 @@
                     @endforeach
                 </div>
             </div>
+            @endif
 
             {{-- Kalkulator Joki Custom --}}
             <div x-data="kalkulatorJoki()">
@@ -419,13 +433,13 @@
                 <div class="divider-neon"></div>
                 <h2 class="section-title text-white">Testimoni <span class="text-neon">Pelanggan</span></h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    @php
+                    <!-- @php
                     $tests = [
                         ['name'=>'Andi','from'=>'GM','to'=>'Epic','msg'=>'Cuma 2 hari udah Epic. Mantap!','av'=>'A'],
                         ['name'=>'Siti','from'=>'Epic','to'=>'Legend','msg'=>'Pelayanan ramah, akun aman.','av'=>'S'],
                         ['name'=>'Budi','from'=>'Legend','to'=>'Mythic','msg'=>'Worth it banget!','av'=>'B'],
                     ];
-                    @endphp
+                    @endphp -->
                     @foreach($tests as $t)
                     <div class="gaming-card">
                         <div class="flex items-center gap-3 mb-3">
@@ -490,6 +504,33 @@
                             </div>
                         </div>
                         <p class="text-gray-400 text-sm">"{{ $t->content }}"</p>
+                        
+                        @if($t->reply)
+                            <div class="mt-4 p-3 bg-dark-800/80 rounded-xl border border-gaming-500/30">
+                                <p class="text-xs font-bold text-neon-blue mb-1">Admin Reply:</p>
+                                <p class="text-gray-300 text-xs">{{ $t->reply }}</p>
+                            </div>
+                        @endif
+
+                        <div class="mt-4 flex flex-col gap-2">
+                            @if(Auth::user()->role === 'admin' && !$t->reply)
+                                <form action="{{ route('testimonial.reply', $t->id) }}" method="POST" class="w-full">
+                                    @csrf
+                                    <div class="flex gap-2">
+                                        <input type="text" name="reply" placeholder="Balas testimoni..." class="w-full text-xs bg-dark-800 border-white/10 rounded-md text-white" required>
+                                        <button type="submit" class="bg-neon-purple text-white px-3 py-1 rounded-md text-xs hover:bg-purple-600 transition">Balas</button>
+                                    </div>
+                                </form>
+                            @endif
+
+                            @if(Auth::user()->role === 'admin' || Auth::id() === $t->user_id)
+                                <form action="{{ route('testimonial.destroy', $t->id) }}" method="POST" class="text-right mt-2">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-red-500 hover:text-red-400 transition" onclick="return confirm('Hapus testimoni ini?')">Hapus</button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                     @empty
                     <div class="col-span-3 text-center text-gray-500 py-4">Belum ada testimoni. Jadilah yang pertama!</div>

@@ -7,6 +7,12 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if ($errors->any())
+        <div class="mb-4 p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 text-sm text-center">
+            Email atau password yang Anda masukkan salah.
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
