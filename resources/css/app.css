@@ -165,12 +165,13 @@
     }
 
     .accordion-header {
-        @apply w-full flex items-center justify-between p-5 text-left font-semibold text-white hover:text-neon-blue transition-colors cursor-pointer;
+        @apply w-full flex items-center justify-between p-5 text-left font-semibold text-white transition-colors cursor-pointer;
         background: transparent;
         border: none;
     }
 
     .accordion-header:hover {
+        color: #00d4ff;
         background: rgba(99, 102, 241, 0.05);
     }
 

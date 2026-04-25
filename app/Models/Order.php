@@ -18,6 +18,7 @@ class Order extends Model
         'price',
         'status',
         'payment_status',
+        'payment_proof',
         'customer_name',
         'game_id',
         'moonton_account',

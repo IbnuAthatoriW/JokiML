@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Jasa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -88,9 +89,22 @@ class OrderController extends Controller
         if (!$request->session()->has('order_final')) {
             return redirect()->route('home');
         }
+
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
+        ], [
+            'payment_proof.required' => 'Bukti pembayaran wajib diupload!',
+            'payment_proof.image' => 'File harus berupa gambar!',
+            'payment_proof.mimes' => 'Format gambar harus jpeg, jpg, png, atau webp!',
+            'payment_proof.max' => 'Ukuran gambar maksimal 5MB!',
+        ]);
+
         $data = $request->session()->get('order_final');
 
-        Order::create([
+        // Upload payment proof
+        $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+
+        $order = Order::create([
             'user_id' => Auth::id(),
             'type' => $data['type'],
             'paket_name' => $data['paket_name'] ?? null,
@@ -100,7 +114,8 @@ class OrderController extends Controller
             'to_star' => $data['to_star'] ?? null,
             'price' => $data['price'],
             'status' => 'pending',
-            'payment_status' => 'sudah dibayar', // Actually we can set it to 'verified' or 'pending verification' since they just clicked I already paid.
+            'payment_status' => 'sudah dibayar',
+            'payment_proof' => $proofPath,
             'customer_name' => $data['customer_name'],
             'game_id' => $data['game_id'],
             'moonton_account' => $data['moonton_account'],
@@ -112,7 +127,17 @@ class OrderController extends Controller
         $request->session()->forget('order_init');
         $request->session()->forget('order_final');
 
-        return redirect()->route('dashboard')->with('success', 'Pembayaran sedang diverifikasi! Order Anda akan segera diproses.');
+        return redirect()->route('order.invoice', $order->id)->with('success', 'Pembayaran berhasil! Berikut adalah nota pemesanan Anda.');
+    }
+
+    public function invoice(Order $order)
+    {
+        // Only allow the order owner or admin to view
+        if (Auth::user()->role !== 'admin' && Auth::id() !== $order->user_id) {
+            abort(403);
+        }
+
+        return view('order.invoice', compact('order'));
     }
 
     public function storeTestimonial(Request $request)

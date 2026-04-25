@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/order/process', [\App\Http\Controllers\OrderController::class, 'process'])->name('order.process');
     Route::get('/order/payment', [\App\Http\Controllers\OrderController::class, 'payment'])->name('order.payment');
     Route::post('/order/confirm', [\App\Http\Controllers\OrderController::class, 'confirmPayment'])->name('order.confirm');
+    Route::get('/order/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('order.invoice');
     Route::patch('/order/{order}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus'])->name('order.status');
     
     // Testimonials

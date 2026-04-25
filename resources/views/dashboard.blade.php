@@ -111,17 +111,20 @@
                                         @if($o->payment_status === 'unpaid')
                                             <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-md text-xs">Unpaid</span>
                                         @elseif($o->payment_status === 'verified' || $o->payment_status === 'sudah dibayar')
-                                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-md text-xs">{{ ucfirst($o->payment_status) }}</span>
+                                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-md text-xs">✅ {{ ucfirst($o->payment_status) }}</span>
                                         @else
                                             <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-md text-xs">{{ $o->payment_status }}</span>
+                                        @endif
+                                        @if($o->payment_proof && Auth::user()->role === 'admin')
+                                            <a href="{{ asset('storage/' . $o->payment_proof) }}" target="_blank" class="block mt-1 text-xs text-gaming-300 hover:text-neon-blue transition">📎 Lihat Bukti</a>
                                         @endif
                                     </td>
                                     <td class="py-3 px-4">
                                         <span class="px-2 py-1 bg-gaming-500/20 text-gaming-300 rounded-md text-xs">{{ ucfirst($o->status) }}</span>
                                     </td>
                                     <td class="py-3 px-4">
-                                        @if($o->payment_status === 'unpaid' && Auth::id() === $o->user_id)
-                                            <a href="{{ route('order.payment', $o->id) }}" class="text-xs bg-neon-purple text-white px-3 py-1 rounded-md hover:bg-purple-600 transition inline-block mb-1">Bayar</a>
+                                        @if($o->payment_status === 'sudah dibayar' || $o->payment_status === 'verified')
+                                            <a href="{{ route('order.invoice', $o->id) }}" class="text-xs bg-gaming-500/20 text-gaming-300 px-3 py-1 rounded-md hover:bg-gaming-500/30 transition inline-block mb-1">📄 Nota</a>
                                         @endif
                                         @if(Auth::user()->role === 'admin')
                                             <form action="{{ route('order.status', $o->id) }}" method="POST" class="inline-block mt-1">
@@ -428,33 +431,7 @@
                 </script>
             </div>
 
-            {{-- Testimoni --}}
-            <div>
-                <div class="divider-neon"></div>
-                <h2 class="section-title text-white">Testimoni <span class="text-neon">Pelanggan</span></h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- @php
-                    $tests = [
-                        ['name'=>'Andi','from'=>'GM','to'=>'Epic','msg'=>'Cuma 2 hari udah Epic. Mantap!','av'=>'A'],
-                        ['name'=>'Siti','from'=>'Epic','to'=>'Legend','msg'=>'Pelayanan ramah, akun aman.','av'=>'S'],
-                        ['name'=>'Budi','from'=>'Legend','to'=>'Mythic','msg'=>'Worth it banget!','av'=>'B'],
-                    ];
-                    @endphp -->
-                    @foreach($tests as $t)
-                    <div class="gaming-card">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gaming-500 to-neon-purple flex items-center justify-center text-white font-bold">{{ $t['av'] }}</div>
-                            <div>
-                                <h4 class="font-semibold text-white text-sm">{{ $t['name'] }}</h4>
-                                <span class="text-xs text-gaming-300">{{ $t['from'] }} → {{ $t['to'] }}</span>
-                            </div>
-                        </div>
-                        <p class="text-gray-400 text-sm italic">"{{ $t['msg'] }}"</p>
-                        <div class="star-rating mt-2"><span>⭐⭐⭐⭐⭐</span></div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
+
 
             {{-- FAQ --}}
             <div x-data="{ openFaq: null }">
@@ -517,8 +494,8 @@
                                 <form action="{{ route('testimonial.reply', $t->id) }}" method="POST" class="w-full">
                                     @csrf
                                     <div class="flex gap-2">
-                                        <input type="text" name="reply" placeholder="Balas testimoni..." class="w-full text-xs bg-dark-800 border-white/10 rounded-md text-white" required>
-                                        <button type="submit" class="bg-neon-purple text-white px-3 py-1 rounded-md text-xs hover:bg-purple-600 transition">Balas</button>
+                                        <input type="text" name="reply" placeholder="Balas testimoni..." class="flex-1 text-xs bg-dark-800 border border-white/10 rounded-md text-white px-3 py-2" required>
+                                        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-md text-xs hover:bg-purple-700 transition-colors cursor-pointer whitespace-nowrap">Balas</button>
                                     </div>
                                 </form>
                             @endif
