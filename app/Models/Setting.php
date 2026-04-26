@@ -14,7 +14,7 @@ class Setting extends Model
     public static function getVal($key, $default = null)
     {
         $setting = self::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        return ($setting && !is_null($setting->value)) ? $setting->value : $default;
     }
 
     /**

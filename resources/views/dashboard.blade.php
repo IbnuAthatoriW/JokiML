@@ -471,10 +471,10 @@
                     <div class="glass-card p-6">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-12 h-12 bg-gaming-500 rounded-full flex items-center justify-center font-bold text-white">
-                                {{ strtoupper(substr($t->user->name, 0, 2)) }}
+                                {{ strtoupper(substr($t->user->name ?? 'U', 0, 2)) }}
                             </div>
                             <div>
-                                <h4 class="font-bold text-white">{{ $t->user->name }}</h4>
+                                <h4 class="font-bold text-white">{{ $t->user->name ?? 'User' }}</h4>
                                 <div class="text-yellow-400 text-sm">
                                     @for($i=0; $i<$t->rating; $i++) ⭐ @endfor
                                 </div>

@@ -386,10 +386,10 @@
                 <div class="gaming-card relative">
                     <div class="flex items-center gap-4 mb-4">
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gaming-500 to-neon-purple flex items-center justify-center text-white font-bold text-lg">
-                            {{ strtoupper(substr($t->user->name, 0, 2)) }}
+                            {{ strtoupper(substr($t->user->name ?? 'U', 0, 2)) }}
                         </div>
                         <div>
-                            <h4 class="font-semibold text-white">{{ $t->user->name }}</h4>
+                            <h4 class="font-semibold text-white">{{ $t->user->name ?? 'User' }}</h4>
                             <div class="text-yellow-400 text-xs">
                                 @for($i=0; $i<$t->rating; $i++) ⭐ @endfor
                             </div>
