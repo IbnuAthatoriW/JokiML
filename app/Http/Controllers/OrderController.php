@@ -149,8 +149,8 @@ class OrderController extends Controller
 
         \App\Models\Testimonial::create([
             'user_id' => Auth::id(),
-            'content' => $request->content,
-            'rating' => $request->rating,
+            'content' => $request->input('content'),
+            'rating' => $request->input('rating'),
         ]);
 
         return back()->with('success', 'Terima kasih atas ulasan Anda!');
