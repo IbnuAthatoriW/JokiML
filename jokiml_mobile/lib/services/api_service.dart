@@ -1,122 +1,54 @@
-// lib/services/api_service.dart
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http_parser/http_parser.dart';
 
 class ApiService {
-  // Use http://10.0.2.2/api for Android emulator, http://localhost/api for desktop/web
-  // We'll expose it as static and modifiable
-  static String baseUrl = 'http://localhost/api';
+  // Ganti localhost dengan IP Laptop Anda (Contoh: 192.168.1.X) jika ditest pake HP asli
+  // atau pakai http://10.0.2.2:8000 jika ditest pake Emulator Android bawaan laptop.
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
 
-  static Future<Map<String, String>> _getHeaders() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
-    
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+  // 1. Ambil Data Paket Joki dari SettingApiController Laravel
+  Future<List<Map<String, dynamic>>> getPaketJoki() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/settings'),
+      ); // Sesuaikan route API Anda
 
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
-    return headers;
-  }
-
-  // GET Request
-  static Future<http.Response> get(String endpoint) async {
-    final headers = await _getHeaders();
-    final response = await http.get(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-    );
-    return response;
-  }
-
-  // POST Request
-  static Future<http.Response> post(String endpoint, Map<String, dynamic> data) async {
-    final headers = await _getHeaders();
-    final response = await http.post(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: jsonEncode(data),
-    );
-    return response;
-  }
-
-  // DELETE Request
-  static Future<http.Response> delete(String endpoint) async {
-    final headers = await _getHeaders();
-    final response = await http.delete(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-    );
-    return response;
-  }
-
-  // PATCH Request
-  static Future<http.Response> patch(String endpoint, Map<String, dynamic> data) async {
-    final headers = await _getHeaders();
-    final response = await http.patch(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: jsonEncode(data),
-    );
-    return response;
-  }
-
-  // POST Multipart Request (For Order creation with image upload)
-  static Future<http.Response> postMultipart({
-    required String endpoint,
-    required Map<String, String> fields,
-    required String fileField,
-    required String filePath,
-    bool isWeb = false,
-    List<int>? fileBytes,
-    String? fileName,
-  }) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
-    final request = http.MultipartRequest('POST', uri);
-
-    // Get Auth Headers
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
-    
-    request.headers['Accept'] = 'application/json';
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-
-    // Add text fields
-    request.fields.addAll(fields);
-
-    // Add image file
-    if (isWeb && fileBytes != null && fileName != null) {
-      // For Flutter Web
-      final multipartFile = http.MultipartFile.fromBytes(
-        fileField,
-        fileBytes,
-        filename: fileName,
-        contentType: MediaType('image', fileName.split('.').last),
-      );
-      request.files.add(multipartFile);
-    } else {
-      // For Mobile / Desktop
-      final file = File(filePath);
-      if (await file.exists()) {
-        final multipartFile = await http.MultipartFile.fromPath(
-          fileField,
-          filePath,
-          contentType: MediaType('image', filePath.split('.').last),
-        );
-        request.files.add(multipartFile);
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Gagal memuat paket joki dari web');
       }
+    } catch (e) {
+      throw Exception('Error Koneksi: $e');
     }
+  }
 
-    final streamedResponse = await request.send();
-    return await http.Response.fromStream(streamedResponse);
+  // 2. Kirim Data Orderan Baru ke OrderApiController Laravel
+  Future<bool> kirimOrder({
+    required String idGame,
+    required String zoneId,
+    required int paketId,
+    required String nomorWa,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/orders'), // Menembak ke OrderApiController.php
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id_game': idGame,
+          'zone_id': zoneId,
+          'paket_id': paketId,
+          'nomor_wa': nomorWa,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 21) {
+        return true; // Berhasil disimpan ke database web
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 }

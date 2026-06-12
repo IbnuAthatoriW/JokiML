@@ -1,4 +1,4 @@
-package com.jokiml.jokiml_mobile
+package com.example.jokiml_mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
