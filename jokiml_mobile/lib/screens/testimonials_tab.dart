@@ -221,7 +221,7 @@ class _TestimonialsTabState extends State<TestimonialsTab> {
                                     ],
                                   ],
                                 ),
-                              ];
+                              ]
                             },
                           ),
                   ),

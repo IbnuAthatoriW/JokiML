@@ -26,7 +26,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: neonBlue,
         surface: cardColor,
-        background: backgroundColor,
         error: neonPink,
       ),
       textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(

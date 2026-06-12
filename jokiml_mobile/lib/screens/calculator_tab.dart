@@ -119,7 +119,7 @@ class _CalculatorTabState extends State<CalculatorTab> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _fromRankId,
+                    initialValue: _fromRankId,
                     hint: const Text('-- Pilih Rank --'),
                     dropdownColor: AppTheme.cardColor,
                     items: settingProvider.ranks.map((r) {
@@ -164,7 +164,7 @@ class _CalculatorTabState extends State<CalculatorTab> {
                             onChanged: (_) => _calculatePrice(),
                           )
                         : DropdownButtonFormField<int>(
-                            value: _fromStar,
+                            initialValue: _fromStar,
                             hint: const Text('-- Pilih Bintang --'),
                             dropdownColor: AppTheme.cardColor,
                             items: List.generate(
@@ -187,7 +187,7 @@ class _CalculatorTabState extends State<CalculatorTab> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _toRankId,
+                    initialValue: _toRankId,
                     hint: const Text('-- Pilih Rank --'),
                     dropdownColor: AppTheme.cardColor,
                     items: targetRanks.map((r) {
@@ -222,7 +222,7 @@ class _CalculatorTabState extends State<CalculatorTab> {
                             onChanged: (_) => _calculatePrice(),
                           )
                         : DropdownButtonFormField<int>(
-                            value: _toStar,
+                            initialValue: _toStar,
                             hint: const Text('-- Pilih Bintang --'),
                             dropdownColor: AppTheme.cardColor,
                             items: List.generate(
