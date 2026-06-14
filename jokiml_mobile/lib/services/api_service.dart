@@ -1,54 +1,206 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Ganti localhost dengan IP Laptop Anda (Contoh: 192.168.1.X) jika ditest pake HP asli
-  // atau pakai http://10.0.2.2:8000 jika ditest pake Emulator Android bawaan laptop.
+  // Ganti IP ini sesuai kebutuhan:
+  // - Emulator Android bawaan  → http://10.0.2.2:8000/api
+  // - HP fisik / Genymotion    → http://<IP_LAPTOP>:8000/api
+  // - Production               → https://domain-kamu.com/api
   static const String baseUrl = 'http://10.0.2.2:8000/api';
 
-  // 1. Ambil Data Paket Joki dari SettingApiController Laravel
-  Future<List<Map<String, dynamic>>> getPaketJoki() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/settings'),
-      ); // Sesuaikan route API Anda
+  // ─── TOKEN MANAGEMENT ─────────────────────────────────────────────────────
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data.map((item) => item as Map<String, dynamic>).toList();
-      } else {
-        throw Exception('Gagal memuat paket joki dari web');
-      }
-    } catch (e) {
-      throw Exception('Error Koneksi: $e');
-    }
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
   }
 
-  // 2. Kirim Data Orderan Baru ke OrderApiController Laravel
-  Future<bool> kirimOrder({
-    required String idGame,
-    required String zoneId,
-    required int paketId,
-    required String nomorWa,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/orders'), // Menembak ke OrderApiController.php
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'id_game': idGame,
-          'zone_id': zoneId,
-          'paket_id': paketId,
-          'nomor_wa': nomorWa,
-        }),
-      );
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', token);
+  }
 
-      if (response.statusCode == 200 || response.statusCode == 21) {
-        return true; // Berhasil disimpan ke database web
-      }
-      return false;
-    } catch (e) {
-      return false;
+  Future<void> clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+  }
+
+  Future<Map<String, String>> _authHeaders() async {
+    final token = await getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // ─── AUTH ──────────────────────────────────────────────────────────────────
+
+  /// Login → simpan token, return user map
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/login'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    final body = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      await saveToken(body['access_token']);
+      return body['user'];
     }
+    throw Exception(body['message'] ?? 'Login gagal');
+  }
+
+  /// Register → simpan token, return user map
+  Future<Map<String, dynamic>> register(
+    String name,
+    String email,
+    String password,
+    String passwordConfirmation,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+    if (response.statusCode == 201) {
+      await saveToken(body['access_token']);
+      return body['user'];
+    }
+    throw Exception(body['message'] ?? 'Registrasi gagal');
+  }
+
+  /// Logout → hapus token
+  Future<void> logout() async {
+    final headers = await _authHeaders();
+    await http.post(Uri.parse('$baseUrl/logout'), headers: headers);
+    await clearToken();
+  }
+
+  /// Ambil data user yang sedang login
+  Future<Map<String, dynamic>> getMe() async {
+    final headers = await _authHeaders();
+    final response = await http.get(Uri.parse('$baseUrl/me'), headers: headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['user'];
+    }
+    throw Exception('Sesi habis, silakan login ulang');
+  }
+
+  // ─── SETTINGS (HARGA PAKET) ────────────────────────────────────────────────
+
+  /// Ambil harga paket dari SettingApiController
+  /// Return: Map seperti { 'price_gm_epic': 60000, 'price_epic_legend': 100000, ... }
+  Future<Map<String, dynamic>> getSettings() async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/settings'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Gagal memuat harga paket');
+  }
+
+  // ─── ORDERS ────────────────────────────────────────────────────────────────
+
+  /// Ambil daftar order milik user yang login
+  Future<List<Map<String, dynamic>>> getMyOrders() async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/orders'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    }
+    throw Exception('Gagal memuat riwayat order');
+  }
+
+  /// Kirim order baru dengan bukti pembayaran (multipart/form-data)
+  /// Backend butuh: type, price, customer_name, game_id,
+  ///                moonton_account, moonton_password, whatsapp,
+  ///                payment_proof (file gambar),
+  ///                paket_name / from_rank / to_rank / from_star / to_star (opsional)
+  Future<Map<String, dynamic>> createOrder({
+    required String type, // 'paket' atau 'custom'
+    required double price,
+    required String customerName,
+    required String gameId,
+    required String moontoonAccount,
+    required String moontoonPassword,
+    required String whatsapp,
+    required File paymentProof,
+    String? paketName,
+    String? fromRank,
+    String? toRank,
+    int? fromStar,
+    int? toStar,
+    String? heroRequest,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/orders'));
+
+    // Headers
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+
+    // Field teks
+    request.fields['type'] = type;
+    request.fields['price'] = price.toStringAsFixed(0);
+    request.fields['customer_name'] = customerName;
+    request.fields['game_id'] = gameId;
+    request.fields['moonton_account'] = moontoonAccount;
+    request.fields['moonton_password'] = moontoonPassword;
+    request.fields['whatsapp'] = whatsapp;
+    if (paketName != null) request.fields['paket_name'] = paketName;
+    if (fromRank != null) request.fields['from_rank'] = fromRank;
+    if (toRank != null) request.fields['to_rank'] = toRank;
+    if (fromStar != null) request.fields['from_star'] = fromStar.toString();
+    if (toStar != null) request.fields['to_star'] = toStar.toString();
+    if (heroRequest != null) request.fields['hero_request'] = heroRequest;
+
+    // File bukti pembayaran
+    request.files.add(
+      await http.MultipartFile.fromPath('payment_proof', paymentProof.path),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      return body['order'];
+    }
+    // Tampilkan error validasi dari Laravel
+    if (body['errors'] != null) {
+      final errors = body['errors'] as Map<String, dynamic>;
+      final firstError = errors.values.first;
+      throw Exception(firstError is List ? firstError.first : firstError);
+    }
+    throw Exception(body['message'] ?? 'Gagal membuat order');
   }
 }

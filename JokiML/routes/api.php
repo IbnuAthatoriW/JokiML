@@ -25,4 +25,3 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderApiController::class, 'store']);
     Route::patch('/orders/{order}/status', [OrderApiController::class, 'updateStatus']);
 });
-
