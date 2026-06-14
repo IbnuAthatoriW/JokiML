@@ -50,10 +50,10 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
 
   String _formatHarga(dynamic value) {
     if (value == null) return 'Rp 0';
-    final num = value is int
+    final number = value is int
         ? value
         : (double.tryParse(value.toString())?.toInt() ?? 0);
-    return 'Rp ${num.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    return 'Rp ${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   @override
@@ -85,55 +85,56 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
               child: CircularProgressIndicator(color: Color(0xFF00FFCC)),
             )
           : _error != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white54),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 48),
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: _loadOrders,
+                        child: const Text(
+                          'Coba Lagi',
+                          style: TextStyle(color: Color(0xFF00FFCC)),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _loadOrders,
-                    child: const Text(
-                      'Coba Lagi',
-                      style: TextStyle(color: Color(0xFF00FFCC)),
+                )
+              : _orders.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            color: Colors.white24,
+                            size: 64,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'Belum ada order',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadOrders,
+                      color: const Color(0xFF00FFCC),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _orders.length,
+                        itemBuilder: (_, i) => _orderCard(_orders[i]),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            )
-          : _orders.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    color: Colors.white24,
-                    size: 64,
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Belum ada order',
-                    style: TextStyle(color: Colors.white38),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadOrders,
-              color: const Color(0xFF00FFCC),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _orders.length,
-                itemBuilder: (_, i) => _orderCard(_orders[i]),
-              ),
-            ),
     );
   }
 

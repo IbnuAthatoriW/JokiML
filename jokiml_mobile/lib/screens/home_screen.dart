@@ -77,9 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatHarga(dynamic value) {
     if (value == null) return 'Rp 0';
-    final num = value is int ? value : int.tryParse(value.toString()) ?? 0;
+    final number = value is int ? value : int.tryParse(value.toString()) ?? 0;
     // Format angka dengan titik ribuan
-    return 'Rp ${num.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    return 'Rp ${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   void _pilihPaket(Map<String, String> paket) {
