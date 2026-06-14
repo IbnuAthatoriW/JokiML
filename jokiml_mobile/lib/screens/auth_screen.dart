@@ -3,7 +3,7 @@ import 'package:jokiml_mobile/services/api_service.dart';
 import 'package:jokiml_mobile/screens/home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();

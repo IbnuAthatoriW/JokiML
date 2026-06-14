@@ -5,7 +5,7 @@ import 'package:jokiml_mobile/screens/riwayat_screen.dart';
 import 'package:jokiml_mobile/screens/auth_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -50,8 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final results = await Future.wait([_api.getSettings(), _api.getMe()]);
       setState(() {
-        _settings = results[0] as Map<String, dynamic>;
-        _user = results[1] as Map<String, dynamic>;
+        _settings = results[0];
+        _user = results[1];
         _isLoading = false;
       });
     } catch (e) {

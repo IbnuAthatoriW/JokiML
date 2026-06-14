@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jokiml_mobile/services/api_service.dart';
 
 class RiwayatScreen extends StatefulWidget {
-  const RiwayatScreen({Key? key}) : super(key: key);
+  const RiwayatScreen({super.key});
 
   @override
   State<RiwayatScreen> createState() => _RiwayatScreenState();

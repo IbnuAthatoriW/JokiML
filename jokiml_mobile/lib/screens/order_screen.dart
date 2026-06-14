@@ -11,13 +11,13 @@ class OrderScreen extends StatefulWidget {
   final String? toRank;
 
   const OrderScreen({
-    Key? key,
+    super.key,
     required this.type,
     required this.price,
     this.paketName,
     this.fromRank,
     this.toRank,
-  }) : super(key: key);
+  });
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -708,7 +708,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
   String _formatHarga(dynamic value) {
     final number =
-        (value is double ? value : (value as num)?.toDouble() ?? 0.0);
+        (value is double ? value : (value as num).toDouble() ?? 0.0);
     final intVal = number.toInt();
     return 'Rp ${intVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
