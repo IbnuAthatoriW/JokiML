@@ -4,10 +4,16 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Ganti IP ini sesuai kebutuhan:
-  // - Emulator Android bawaan  → http://10.0.2.2:8000/api
-  // - HP fisik / Genymotion    → http://<IP_LAPTOP>:8000/api
-  // - Production               → https://domain-kamu.com/api
+  // ─── KONFIGURASI BASE URL ───────────────────────────────────────────────────
+  // Pilih salah satu sesuai environment:
+  //   Emulator Android bawaan (AVD) → http://10.0.2.2:8000/api
+  //   HP fisik / Genymotion          → http://<IP_LAPTOP_KAMU>:8000/api
+  //   Production (HTTPS)             → https://domain-kamu.com/api
+  //
+  // Cara cek IP laptop di jaringan yang sama:
+  //   Windows: ipconfig  →  cari IPv4 Address
+  //   Mac/Linux: ifconfig / ip addr
+  // ─────────────────────────────────────────────────────────────────────────────
   static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   // ─── TOKEN MANAGEMENT ─────────────────────────────────────────────────────
@@ -41,7 +47,7 @@ class ApiService {
   /// Login → simpan token, return user map
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$baseUrl/auth/login'), // ← /auth/login sesuai route Laravel
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -65,7 +71,8 @@ class ApiService {
     String passwordConfirmation,
   ) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse(
+          '$baseUrl/auth/register'), // ← /auth/register sesuai route Laravel
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -83,20 +90,31 @@ class ApiService {
       await saveToken(body['access_token']);
       return body['user'];
     }
+    // Tangkap error validasi Laravel (misal email sudah dipakai)
+    if (body['errors'] != null) {
+      final errors = body['errors'] as Map<String, dynamic>;
+      final firstError = errors.values.first;
+      throw Exception(firstError is List ? firstError.first : firstError);
+    }
     throw Exception(body['message'] ?? 'Registrasi gagal');
   }
 
   /// Logout → hapus token
   Future<void> logout() async {
     final headers = await _authHeaders();
-    await http.post(Uri.parse('$baseUrl/logout'), headers: headers);
+    await http
+        .post(Uri.parse('$baseUrl/auth/logout'),
+            headers: headers) // ← /auth/logout
+        .timeout(const Duration(seconds: 5))
+        .catchError((_) {}); // ignore network error saat logout
     await clearToken();
   }
 
   /// Ambil data user yang sedang login
   Future<Map<String, dynamic>> getMe() async {
     final headers = await _authHeaders();
-    final response = await http.get(Uri.parse('$baseUrl/me'), headers: headers);
+    final response = await http.get(Uri.parse('$baseUrl/auth/me'),
+        headers: headers); // ← /auth/me
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['user'];
@@ -107,7 +125,6 @@ class ApiService {
   // ─── SETTINGS (HARGA PAKET) ────────────────────────────────────────────────
 
   /// Ambil harga paket dari SettingApiController
-  /// Return: Map seperti { 'price_gm_epic': 60000, 'price_epic_legend': 100000, ... }
   Future<Map<String, dynamic>> getSettings() async {
     final headers = await _authHeaders();
     final response = await http.get(
@@ -139,10 +156,6 @@ class ApiService {
   }
 
   /// Kirim order baru dengan bukti pembayaran (multipart/form-data)
-  /// Backend butuh: type, price, customer_name, game_id,
-  ///                moonton_account, moonton_password, whatsapp,
-  ///                payment_proof (file gambar),
-  ///                paket_name / from_rank / to_rank / from_star / to_star (opsional)
   Future<Map<String, dynamic>> createOrder({
     required String type, // 'paket' atau 'custom'
     required double price,
@@ -195,7 +208,6 @@ class ApiService {
     if (response.statusCode == 201) {
       return body['order'];
     }
-    // Tampilkan error validasi dari Laravel
     if (body['errors'] != null) {
       final errors = body['errors'] as Map<String, dynamic>;
       final firstError = errors.values.first;

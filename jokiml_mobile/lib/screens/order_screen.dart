@@ -707,8 +707,7 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   String _formatHarga(dynamic value) {
-    final number =
-        (value is double ? value : (value as num).toDouble() ?? 0.0);
+    final number = (value is double ? value : (value as num).toDouble() ?? 0.0);
     final intVal = number.toInt();
     return 'Rp ${intVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
