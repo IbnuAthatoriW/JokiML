@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Jasa;
+use App\Services\RankingSystem;
+use App\Services\RankCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -29,9 +31,39 @@ class OrderController extends Controller
             'paket_name' => 'nullable|string',
             'from_rank' => 'nullable|string',
             'to_rank' => 'nullable|string',
-            'from_star' => 'nullable|numeric',
-            'to_star' => 'nullable|numeric',
+            'from_star' => 'nullable|numeric|min:0|max:9999',
+            'to_star' => 'nullable|numeric|min:0|max:9999',
         ]);
+
+        // Validasi untuk custom order
+        if ($request->type === 'custom') {
+            $fromRank = $request->input('from_rank');
+            $toRank = $request->input('to_rank');
+            $fromStar = (int)$request->input('from_star');
+            $toStar = (int)$request->input('to_star');
+
+            // Validasi rank ada
+            if (!$fromRank || !$toRank) {
+                return back()->withErrors(['rank' => 'Pilih rank awal dan tujuan']);
+            }
+
+            // Validasi rank valid
+            $allRanks = RankingSystem::getAllRanks();
+            if (!in_array($fromRank, $allRanks) || !in_array($toRank, $allRanks)) {
+                return back()->withErrors(['rank' => 'Rank tidak valid']);
+            }
+
+            // Validasi star sesuai dengan range rank
+            if (!RankingSystem::validateStarInRank($fromRank, $fromStar)) {
+                $range = RankingSystem::getStarRange($fromRank);
+                return back()->withErrors(['from_star' => "Bintang untuk {$fromRank} harus antara {$range['min']} sampai {$range['max']}"]);
+            }
+
+            if (!RankingSystem::validateStarInRank($toRank, $toStar)) {
+                $range = RankingSystem::getStarRange($toRank);
+                return back()->withErrors(['to_star' => "Bintang untuk {$toRank} harus antara {$range['min']} sampai {$range['max']}"]);
+            }
+        }
 
         $request->session()->put('order_init', $request->except('_token'));
         
@@ -191,4 +223,90 @@ class OrderController extends Controller
         $testimonial->update(['reply' => $request->reply]);
         return back()->with('success', 'Balasan berhasil dikirim!');
     }
+
+    /**
+     * Calculate price for custom rank order with multi-rank support
+     * This is called from the frontend (mobile/web) to calculate real-time pricing
+     */
+    public function calculateCustomPrice(Request $request)
+    {
+        try {
+            $request->validate([
+                'from_rank' => 'required|string',
+                'from_star' => 'required|integer|min:0',
+                'to_rank' => 'required|string',
+                'to_star' => 'required|integer|min:0',
+                'price_per_rank' => 'required|array',
+            ]);
+
+            $fromRank = $request->input('from_rank');
+            $fromStar = (int)$request->input('from_star');
+            $toRank = $request->input('to_rank');
+            $toStar = (int)$request->input('to_star');
+            $pricePerRank = $request->input('price_per_rank');
+
+            // Validate rank-star combinations
+            if (!RankingSystem::validateStarInRank($fromRank, $fromStar)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => "Bintang {$fromStar} tidak valid untuk rank {$fromRank}"
+                ], 422);
+            }
+
+            if (!RankingSystem::validateStarInRank($toRank, $toStar)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => "Bintang {$toStar} tidak valid untuk rank {$toRank}"
+                ], 422);
+            }
+
+            // Calculate price with breakdown
+            $priceData = RankCalculator::calculatePrice(
+                $fromRank,
+                $fromStar,
+                $toRank,
+                $toStar,
+                $pricePerRank
+            );
+
+            return response()->json([
+                'success' => true,
+                'total_price' => $priceData['total_price'],
+                'breakdown' => $priceData['breakdown'],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all valid ranks and their star ranges
+     */
+    public function getRankInfo(Request $request)
+    {
+        $ranks = [];
+        foreach (RankingSystem::getAllRanks() as $rankName) {
+            $details = RankingSystem::getRankDetails($rankName);
+            $ranges = RankingSystem::getStarRange($rankName);
+            $ranks[] = [
+                'name' => $rankName,
+                'min_star' => $ranges['min'],
+                'max_star' => $ranges['max'],
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'ranks' => $ranks,
+        ]);
+    }
 }
+

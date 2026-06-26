@@ -12,6 +12,10 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/settings', [SettingApiController::class, 'index']);
 Route::get('/testimonials', [TestimonialApiController::class, 'index']);
 
+// Ranking system endpoints
+Route::get('/ranks', [OrderApiController::class, 'getRankInfo']);
+Route::post('/orders/calculate-price', [OrderApiController::class, 'calculateCustomPrice']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
