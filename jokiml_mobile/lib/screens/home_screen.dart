@@ -17,8 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _user;
   bool _isLoading = true;
 
-  // Daftar paket yang ditampilkan ke user
-  // Key harus sama dengan key dari SettingApiController
   final List<Map<String, String>> _paketList = [
     {
       'key': 'price_gm_epic',
@@ -49,20 +47,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadData() async {
     try {
       final results = await Future.wait([_api.getSettings(), _api.getMe()]);
+      if (!mounted) return;
       setState(() {
         _settings = results[0];
         _user = results[1];
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      if (mounted) {
-        // Kalau sesi habis / belum login, balik ke AuthScreen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-        );
-      }
+      // Token expired atau tidak ada koneksi
+      await _api.clearToken();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
     }
   }
 
@@ -77,14 +76,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatHarga(dynamic value) {
     if (value == null) return 'Rp 0';
-    final number = value is int ? value : int.tryParse(value.toString()) ?? 0;
-    // Format angka dengan titik ribuan
-    return 'Rp ${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    final intVal =
+        (value is num) ? value.toInt() : int.tryParse(value.toString()) ?? 0;
+    return 'Rp ${intVal.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]}.',
+        )}';
   }
 
   void _pilihPaket(Map<String, String> paket) {
     final harga = (_settings[paket['key']] as num?)?.toDouble() ?? 0.0;
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -94,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
           fromRank: paket['from']!,
           toRank: paket['to']!,
           price: harga,
+          settings: _settings, // teruskan settings ke order screen
         ),
       ),
     );
@@ -115,16 +117,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CircularProgressIndicator(color: Color(0xFF00FFCC)),
               )
             : SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildHeader(),
-                      _buildHeroSection(),
-                      _buildPaketSection(),
-                      _buildHargaBintangSection(),
-                      _buildMenuSection(),
-                      const SizedBox(height: 40),
-                    ],
+                child: RefreshIndicator(
+                  onRefresh: _loadData,
+                  color: const Color(0xFF00FFCC),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        _buildHeroSection(),
+                        _buildPaketSection(),
+                        _buildHargaBintangSection(),
+                        _buildMenuSection(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -327,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHargaBintangSection() {
-    // Harga per bintang dari settings
     final starData = [
       {'rank': 'Grandmaster', 'key': 'star_grandmaster'},
       {'rank': 'Epic', 'key': 'star_epic'},
@@ -367,7 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
             columnWidths: const {
               0: FlexColumnWidth(2),
               1: FlexColumnWidth(2),
-              2: FlexColumnWidth(1),
             },
             children: [
               const TableRow(
@@ -386,7 +391,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
-                  SizedBox(),
                 ],
               ),
               ...starData.map(
@@ -396,10 +400,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         item['rank']!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ),
                     Padding(
@@ -407,12 +409,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         _formatHarga(_settings[item['key']]),
                         style: const TextStyle(
-                          color: Color(0xFF00FFCC),
-                          fontSize: 13,
-                        ),
+                            color: Color(0xFF00FFCC), fontSize: 13),
                       ),
                     ),
-                    const SizedBox(),
                   ],
                 ),
               ),
@@ -425,7 +424,12 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const OrderScreen(type: 'custom', price: 0),
+                  builder: (_) => OrderScreen(
+                    type: 'custom',
+                    price: 0,
+                    settings:
+                        _settings, // teruskan settings untuk kalkulasi harga
+                  ),
                 ),
               ),
               style: OutlinedButton.styleFrom(
@@ -466,7 +470,11 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const OrderScreen(type: 'paket', price: 0),
+                  builder: (_) => OrderScreen(
+                    type: 'paket',
+                    price: 0,
+                    settings: _settings,
+                  ),
                 ),
               ),
             ),

@@ -9,6 +9,7 @@ class OrderScreen extends StatefulWidget {
   final String? paketName;
   final String? fromRank;
   final String? toRank;
+  final Map<String, dynamic> settings; // harga dari API
 
   const OrderScreen({
     super.key,
@@ -17,6 +18,7 @@ class OrderScreen extends StatefulWidget {
     this.paketName,
     this.fromRank,
     this.toRank,
+    this.settings = const {},
   });
 
   @override
@@ -28,7 +30,6 @@ class _OrderScreenState extends State<OrderScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Controllers untuk field yang dibutuhkan backend
   final _customerNameCtrl = TextEditingController();
   final _gameIdCtrl = TextEditingController();
   final _moontoonAccountCtrl = TextEditingController();
@@ -36,7 +37,6 @@ class _OrderScreenState extends State<OrderScreen> {
   final _whatsappCtrl = TextEditingController();
   final _heroRequestCtrl = TextEditingController();
 
-  // Untuk custom order
   String? _fromRank;
   String? _toRank;
   int _fromStar = 1;
@@ -59,23 +59,22 @@ class _OrderScreenState extends State<OrderScreen> {
     'Immortal',
   ];
 
-  // Harga per bintang untuk kalkulasi custom
-  // Idealnya ini dari settings API, tapi disederhanakan dulu
-  final Map<String, int> _starPrices = {
-    'Grandmaster': 3000,
-    'Epic': 4000,
-    'Legend': 6000,
-    'Mythic': 9000,
-    'Mythic Honor': 13000,
-    'Mythic Glory': 30000,
-    'Immortal': 100000,
+  // Key mapping dari rank ke key settings API
+  final Map<String, String> _rankToSettingsKey = {
+    'Grandmaster': 'star_grandmaster',
+    'Epic': 'star_epic',
+    'Legend': 'star_legend',
+    'Mythic': 'star_mythic',
+    'Mythic Honor': 'star_honor',
+    'Mythic Glory': 'star_glory',
+    'Immortal': 'star_immortal',
   };
 
   @override
   void initState() {
     super.initState();
-    _fromRank = widget.fromRank ?? _rankOptions[3]; // default Grandmaster
-    _toRank = widget.toRank ?? _rankOptions[4]; // default Epic
+    _fromRank = widget.fromRank ?? 'Grandmaster';
+    _toRank = widget.toRank ?? 'Epic';
     _hitungHargaCustom();
   }
 
@@ -90,9 +89,29 @@ class _OrderScreenState extends State<OrderScreen> {
     super.dispose();
   }
 
+  /// Ambil harga per bintang dari settings API, fallback ke hardcoded
+  int _getStarPrice(String? rank) {
+    if (rank == null) return 3000;
+    final key = _rankToSettingsKey[rank];
+    if (key != null && widget.settings.containsKey(key)) {
+      return (widget.settings[key] as num).toInt();
+    }
+    // Fallback jika settings kosong
+    const fallback = {
+      'Grandmaster': 3000,
+      'Epic': 4000,
+      'Legend': 6000,
+      'Mythic': 9000,
+      'Mythic Honor': 13000,
+      'Mythic Glory': 30000,
+      'Immortal': 100000,
+    };
+    return fallback[rank] ?? 3000;
+  }
+
   void _hitungHargaCustom() {
     if (widget.type != 'custom') return;
-    final hargaPerBintang = _starPrices[_fromRank] ?? 3000;
+    final hargaPerBintang = _getStarPrice(_fromRank);
     setState(() {
       _customPrice = hargaPerBintang * _fromStar.toDouble();
     });
@@ -219,17 +238,12 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Info paket / custom rank
               _buildInfoSection(isCustom, hargaTampil),
               const SizedBox(height: 20),
-
-              // Custom rank selector
               if (isCustom) ...[
                 _buildCustomRankSection(),
                 const SizedBox(height: 20),
               ],
-
-              // Data akun game
               _buildSection(
                 title: 'Data Akun Game',
                 children: [
@@ -262,8 +276,6 @@ class _OrderScreenState extends State<OrderScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Data pelanggan
               _buildSection(
                 title: 'Data Kontak',
                 children: [
@@ -294,12 +306,8 @@ class _OrderScreenState extends State<OrderScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Upload bukti bayar
               _buildUploadSection(),
               const SizedBox(height: 28),
-
-              // Tombol submit
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -406,10 +414,8 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Rank Sekarang',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
+                  const Text('Rank Sekarang',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 6),
                   _dropdownRank(
                     value: _fromRank,
@@ -429,10 +435,8 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Target Rank',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
+                  const Text('Target Rank',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 6),
                   _dropdownRank(
                     value: _toRank,
@@ -450,10 +454,8 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Bintang Sekarang',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
+                  const Text('Bintang Sekarang',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 6),
                   _dropdownBintang(
                     value: _fromStar,
@@ -470,10 +472,8 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Target Bintang',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
+                  const Text('Target Bintang',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 6),
                   _dropdownBintang(
                     value: _toStar,
@@ -494,10 +494,8 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Estimasi Harga:',
-                style: TextStyle(color: Colors.white54),
-              ),
+              const Text('Estimasi Harga:',
+                  style: TextStyle(color: Colors.white54)),
               Text(
                 _formatHarga(_customPrice),
                 style: const TextStyle(
@@ -533,7 +531,6 @@ class _OrderScreenState extends State<OrderScreen> {
                 color: _paymentProof != null
                     ? const Color(0xFF00FFCC)
                     : Colors.white24,
-                style: BorderStyle.solid,
               ),
             ),
             child: _paymentProof != null
@@ -548,20 +545,14 @@ class _OrderScreenState extends State<OrderScreen> {
                 : const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.cloud_upload_outlined,
-                        color: Color(0xFF00FFCC),
-                        size: 40,
-                      ),
+                      Icon(Icons.cloud_upload_outlined,
+                          color: Color(0xFF00FFCC), size: 40),
                       SizedBox(height: 8),
-                      Text(
-                        'Tap untuk upload foto',
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                      Text(
-                        'JPG, PNG, WEBP (max 5MB)',
-                        style: TextStyle(color: Colors.white24, fontSize: 11),
-                      ),
+                      Text('Tap untuk upload foto',
+                          style: TextStyle(color: Colors.white54)),
+                      Text('JPG, PNG, WEBP (max 5MB)',
+                          style:
+                              TextStyle(color: Colors.white24, fontSize: 11)),
                     ],
                   ),
           ),
@@ -569,10 +560,8 @@ class _OrderScreenState extends State<OrderScreen> {
         if (_paymentProof != null)
           TextButton(
             onPressed: _pilihFoto,
-            child: const Text(
-              'Ganti Foto',
-              style: TextStyle(color: Color(0xFF00FFCC)),
-            ),
+            child: const Text('Ganti Foto',
+                style: TextStyle(color: Color(0xFF00FFCC))),
           ),
       ],
     );
@@ -592,14 +581,11 @@ class _OrderScreenState extends State<OrderScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFF00FFCC),
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  color: Color(0xFF00FFCC),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14)),
           const SizedBox(height: 14),
           ...children,
         ],
@@ -651,6 +637,10 @@ class _OrderScreenState extends State<OrderScreen> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
     );
@@ -707,8 +697,11 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   String _formatHarga(dynamic value) {
-    final number = (value is double ? value : (value as num).toDouble() ?? 0.0);
-    final intVal = number.toInt();
-    return 'Rp ${intVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    final intVal =
+        (value is num) ? value.toInt() : int.tryParse(value.toString()) ?? 0;
+    return 'Rp ${intVal.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]}.',
+        )}';
   }
 }

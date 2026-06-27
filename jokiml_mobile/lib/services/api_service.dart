@@ -5,16 +5,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // ─── KONFIGURASI BASE URL ───────────────────────────────────────────────────
-  // Pilih salah satu sesuai environment:
-  //   Emulator Android bawaan (AVD) → http://10.0.2.2:8000/api
-  //   HP fisik / Genymotion          → http://<IP_LAPTOP_KAMU>:8000/api
-  //   Production (HTTPS)             → https://domain-kamu.com/api
   //
-  // Cara cek IP laptop di jaringan yang sama:
+  // Cara pakai:
+  //   1. Emulator Android (AVD)  → http://10.0.2.2:8000/api   ← default
+  //   2. HP Fisik (USB/WiFi)     → http://<IP_LAPTOP>:8000/api
+  //   3. Production              → https://domain-kamu.com/api
+  //
+  // Cara ganti tanpa edit kode:
+  //   flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000/api
+  //
+  // Cara cek IP laptop:
   //   Windows: ipconfig  →  cari IPv4 Address
-  //   Mac/Linux: ifconfig / ip addr
+  //   Mac/Linux: ifconfig / ip addr  →  cari inet
   // ─────────────────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000/api',
+  );
 
   // ─── TOKEN MANAGEMENT ─────────────────────────────────────────────────────
 
@@ -46,14 +53,16 @@ class ApiService {
 
   /// Login → simpan token, return user map
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/login'), // ← /auth/login sesuai route Laravel
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/auth/login'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({'email': email, 'password': password}),
+        )
+        .timeout(const Duration(seconds: 15));
 
     final body = jsonDecode(response.body);
     if (response.statusCode == 200) {
@@ -70,27 +79,27 @@ class ApiService {
     String password,
     String passwordConfirmation,
   ) async {
-    final response = await http.post(
-      Uri.parse(
-          '$baseUrl/auth/register'), // ← /auth/register sesuai route Laravel
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'password': password,
-        'password_confirmation': passwordConfirmation,
-      }),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/auth/register'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'name': name,
+            'email': email,
+            'password': password,
+            'password_confirmation': passwordConfirmation,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
 
     final body = jsonDecode(response.body);
     if (response.statusCode == 201) {
       await saveToken(body['access_token']);
       return body['user'];
     }
-    // Tangkap error validasi Laravel (misal email sudah dipakai)
     if (body['errors'] != null) {
       final errors = body['errors'] as Map<String, dynamic>;
       final firstError = errors.values.first;
@@ -103,18 +112,18 @@ class ApiService {
   Future<void> logout() async {
     final headers = await _authHeaders();
     await http
-        .post(Uri.parse('$baseUrl/auth/logout'),
-            headers: headers) // ← /auth/logout
+        .post(Uri.parse('$baseUrl/auth/logout'), headers: headers)
         .timeout(const Duration(seconds: 5))
-        .catchError((_) {}); // ignore network error saat logout
+        .catchError((_) {}); // ignore error jaringan saat logout
     await clearToken();
   }
 
   /// Ambil data user yang sedang login
   Future<Map<String, dynamic>> getMe() async {
     final headers = await _authHeaders();
-    final response = await http.get(Uri.parse('$baseUrl/auth/me'),
-        headers: headers); // ← /auth/me
+    final response = await http
+        .get(Uri.parse('$baseUrl/auth/me'), headers: headers)
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['user'];
@@ -124,13 +133,11 @@ class ApiService {
 
   // ─── SETTINGS (HARGA PAKET) ────────────────────────────────────────────────
 
-  /// Ambil harga paket dari SettingApiController
   Future<Map<String, dynamic>> getSettings() async {
     final headers = await _authHeaders();
-    final response = await http.get(
-      Uri.parse('$baseUrl/settings'),
-      headers: headers,
-    );
+    final response = await http
+        .get(Uri.parse('$baseUrl/settings'), headers: headers)
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -143,21 +150,23 @@ class ApiService {
   /// Ambil daftar order milik user yang login
   Future<List<Map<String, dynamic>>> getMyOrders() async {
     final headers = await _authHeaders();
-    final response = await http.get(
-      Uri.parse('$baseUrl/orders'),
-      headers: headers,
-    );
+    final response = await http
+        .get(Uri.parse('$baseUrl/orders'), headers: headers)
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       return data.cast<Map<String, dynamic>>();
+    }
+    if (response.statusCode == 401) {
+      throw Exception('Sesi habis, silakan login ulang');
     }
     throw Exception('Gagal memuat riwayat order');
   }
 
   /// Kirim order baru dengan bukti pembayaran (multipart/form-data)
   Future<Map<String, dynamic>> createOrder({
-    required String type, // 'paket' atau 'custom'
+    required String type,
     required double price,
     required String customerName,
     required String gameId,
@@ -173,15 +182,17 @@ class ApiService {
     String? heroRequest,
   }) async {
     final token = await getToken();
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/orders'));
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/orders'),
+    );
 
-    // Headers
     request.headers.addAll({
       'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     });
 
-    // Field teks
+    // Fields teks
     request.fields['type'] = type;
     request.fields['price'] = price.toStringAsFixed(0);
     request.fields['customer_name'] = customerName;
@@ -201,7 +212,9 @@ class ApiService {
       await http.MultipartFile.fromPath('payment_proof', paymentProof.path),
     );
 
-    final streamedResponse = await request.send();
+    final streamedResponse = await request.send().timeout(
+          const Duration(seconds: 30),
+        );
     final response = await http.Response.fromStream(streamedResponse);
     final body = jsonDecode(response.body);
 
