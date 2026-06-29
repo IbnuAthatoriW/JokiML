@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jokiml_mobile/services/api_service.dart';
 import 'package:jokiml_mobile/screens/home_screen.dart';
+import 'package:jokiml_mobile/theme.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -111,7 +112,7 @@ class _AuthScreenState extends State<AuthScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F0F1A), Color(0xFF050508)],
+            colors: [AppColors.surfaceAlt, AppColors.background],
           ),
         ),
         child: SafeArea(
@@ -121,13 +122,18 @@ class _AuthScreenState extends State<AuthScreen>
               children: [
                 const SizedBox(height: 40),
                 // Logo / Title
-                const Text(
-                  'JOKI ML',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00FFCC),
-                    letterSpacing: 4,
+                ShaderMask(
+                  shaderCallback: (bounds) => AppColors.primaryGradient.createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                  ),
+                  child: const Text(
+                    'JOKI ML',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 4,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -140,15 +146,17 @@ class _AuthScreenState extends State<AuthScreen>
                 // Tab bar
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TabBar(
                     controller: _tabController,
-                    labelColor: Colors.black,
-                    unselectedLabelColor: const Color(0xFF00FFCC),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
                     indicator: BoxDecoration(
-                      color: const Color(0xFF00FFCC),
+                      gradient: AppColors.primaryGradient,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     tabs: const [
@@ -256,7 +264,7 @@ class _AuthScreenState extends State<AuthScreen>
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
-        prefixIcon: Icon(icon, color: const Color(0xFF00FFCC), size: 20),
+        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
@@ -268,28 +276,42 @@ class _AuthScreenState extends State<AuthScreen>
               )
             : null,
         filled: true,
-        fillColor: const Color(0xFF0F172A),
+        fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF00FFCC), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
         ),
       ),
     );
   }
 
   Widget _submitButton(String label, VoidCallback onPressed) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: 48,
+      decoration: BoxDecoration(
+        gradient: _isLoading ? null : AppColors.primaryGradient,
+        color: _isLoading ? AppColors.surfaceSoft : null,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: _isLoading
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF00FFCC),
-          foregroundColor: Colors.black,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -300,7 +322,7 @@ class _AuthScreenState extends State<AuthScreen>
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
               )
             : Text(
@@ -308,6 +330,7 @@ class _AuthScreenState extends State<AuthScreen>
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
+                  color: Colors.white,
                 ),
               ),
       ),

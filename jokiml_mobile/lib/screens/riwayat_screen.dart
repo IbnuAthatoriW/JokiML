@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jokiml_mobile/services/api_service.dart';
+import 'package:jokiml_mobile/theme.dart';
 
 class RiwayatScreen extends StatefulWidget {
   const RiwayatScreen({super.key});
@@ -42,7 +43,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       case 'on progress':
         return Colors.blue;
       case 'selesai':
-        return const Color(0xFF00FFCC);
+        return Colors.greenAccent;
       default:
         return Colors.grey;
     }
@@ -59,14 +60,14 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050508),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F0F1A),
+        backgroundColor: AppColors.surfaceAlt,
         title: const Text(
           'Riwayat Order',
-          style: TextStyle(color: Color(0xFF00FFCC)),
+          style: TextStyle(color: AppColors.secondary),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF00FFCC)),
+        iconTheme: const IconThemeData(color: AppColors.secondary),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -82,7 +83,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00FFCC)),
+              child: CircularProgressIndicator(color: AppColors.secondary),
             )
           : _error != null
               ? Center(
@@ -102,7 +103,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
                         onPressed: _loadOrders,
                         child: const Text(
                           'Coba Lagi',
-                          style: TextStyle(color: Color(0xFF00FFCC)),
+                          style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
                     ],
@@ -128,7 +129,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
                     )
                   : RefreshIndicator(
                       onRefresh: _loadOrders,
-                      color: const Color(0xFF00FFCC),
+                      color: AppColors.secondary,
                       child: ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _orders.length,
@@ -146,9 +147,9 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

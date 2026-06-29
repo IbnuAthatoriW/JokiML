@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jokiml_mobile/screens/auth_screen.dart';
 import 'package:jokiml_mobile/screens/home_screen.dart';
 import 'package:jokiml_mobile/services/api_service.dart';
+import 'package:jokiml_mobile/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,13 +18,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF050508),
+        scaffoldBackgroundColor: AppColors.background,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF00FFCC),
-          surface: Color(0xFF0F172A),
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          surface: AppColors.surface,
+          background: AppColors.background,
         ),
         inputDecorationTheme: const InputDecorationTheme(
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          filled: true,
+          fillColor: AppColors.surfaceSoft,
         ),
       ),
       home: const SplashScreen(),
@@ -81,28 +86,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF050508),
+    return Scaffold(
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'JOKI ML',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF00FFCC),
-                letterSpacing: 6,
+            ShaderMask(
+              shaderCallback: (bounds) => AppColors.primaryGradient.createShader(
+                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+              ),
+              child: const Text(
+                'JOKI ML',
+                style: TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 6,
+                ),
               ),
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
               'Mobile Legends Rank Booster',
               style: TextStyle(color: Colors.white38, fontSize: 13),
             ),
-            SizedBox(height: 40),
-            CircularProgressIndicator(color: Color(0xFF00FFCC), strokeWidth: 2),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(color: AppColors.secondary, strokeWidth: 2),
           ],
         ),
       ),

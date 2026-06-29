@@ -1,14 +1,39 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
+  ApiService() {
+    dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+  }
+
+  late final Dio dio;
+
   // Ganti IP ini sesuai kebutuhan:
+  // IP PC Rezza 192.168.1.5
   // - Emulator Android bawaan  → http://10.0.2.2:8000/api
   // - HP fisik / Genymotion    → http://<IP_LAPTOP>:8000/api
   // - Production               → https://domain-kamu.com/api
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://192.168.1.5:8000/api';
+
+  dynamic _decodeBody(String body) {
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      throw Exception(
+        'Invalid JSON response from server: ${body.length > 200 ? body.substring(0, 200) + "..." : body}',
+      );
+    }
+  }
 
   // ─── TOKEN MANAGEMENT ─────────────────────────────────────────────────────
 
@@ -41,7 +66,7 @@ class ApiService {
   /// Login → simpan token, return user map
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$baseUrl/auth/login'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -49,7 +74,7 @@ class ApiService {
       body: jsonEncode({'email': email, 'password': password}),
     );
 
-    final body = jsonDecode(response.body);
+    final body = _decodeBody(response.body);
     if (response.statusCode == 200) {
       await saveToken(body['access_token']);
       return body['user'];
@@ -65,7 +90,7 @@ class ApiService {
     String passwordConfirmation,
   ) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse('$baseUrl/auth/register'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -78,7 +103,7 @@ class ApiService {
       }),
     );
 
-    final body = jsonDecode(response.body);
+    final body = _decodeBody(response.body);
     if (response.statusCode == 201) {
       await saveToken(body['access_token']);
       return body['user'];
@@ -89,17 +114,17 @@ class ApiService {
   /// Logout → hapus token
   Future<void> logout() async {
     final headers = await _authHeaders();
-    await http.post(Uri.parse('$baseUrl/logout'), headers: headers);
+    await http.post(Uri.parse('$baseUrl/auth/logout'), headers: headers);
     await clearToken();
   }
 
   /// Ambil data user yang sedang login
   Future<Map<String, dynamic>> getMe() async {
     final headers = await _authHeaders();
-    final response = await http.get(Uri.parse('$baseUrl/me'), headers: headers);
+    final response = await http.get(Uri.parse('$baseUrl/auth/me'), headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['user'];
+      return _decodeBody(response.body)['user'];
     }
     throw Exception('Sesi habis, silakan login ulang');
   }
@@ -116,7 +141,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return _decodeBody(response.body) as Map<String, dynamic>;
     }
     throw Exception('Gagal memuat harga paket');
   }
@@ -132,7 +157,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
+      final List data = _decodeBody(response.body);
       return data.cast<Map<String, dynamic>>();
     }
     throw Exception('Gagal memuat riwayat order');
@@ -190,7 +215,7 @@ class ApiService {
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-    final body = jsonDecode(response.body);
+    final body = _decodeBody(response.body);
 
     if (response.statusCode == 201) {
       return body['order'];

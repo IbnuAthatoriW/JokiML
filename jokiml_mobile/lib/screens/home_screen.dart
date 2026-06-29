@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jokiml_mobile/services/api_service.dart';
+import 'package:jokiml_mobile/screens/badge_chip.dart';
 import 'package:jokiml_mobile/screens/order_screen.dart';
 import 'package:jokiml_mobile/screens/riwayat_screen.dart';
 import 'package:jokiml_mobile/screens/auth_screen.dart';
+import 'package:jokiml_mobile/theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -107,12 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F0F1A), Color(0xFF050508)],
+            colors: [AppColors.surfaceAlt, AppColors.background],
           ),
         ),
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF00FFCC)),
+                child: CircularProgressIndicator(color: AppColors.secondary),
               )
             : SafeArea(
                 child: SingleChildScrollView(
@@ -144,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text(
                 'JOKI ML',
                 style: TextStyle(
-                  color: Color(0xFF00FFCC),
+                  color: AppColors.secondary,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                   letterSpacing: 3,
@@ -184,39 +186,148 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF020617)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [AppColors.surface, AppColors.surfaceAlt],
         ),
-        border: Border.all(color: const Color(0xFF00FFCC).withOpacity(0.2)),
+        border: Border.all(color: AppColors.border.withOpacity(0.4)),
       ),
-      child: Column(
-        children: [
-          const Text(
-            'JOKI MOBILE LEGENDS',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF00FFCC),
-              letterSpacing: 2,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 720;
+          final heroContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.check_circle, size: 14, color: AppColors.primary),
+                    SizedBox(width: 6),
+                    Text(
+                      '#1 Jasa Joki Terpercaya di Indonesia',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Joki Mobile Legends Profesional',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Naik rank lebih cepat, aman, dan terpercaya. Dipercaya oleh ribuan player di seluruh Indonesia.',
+                style: TextStyle(color: Colors.white54, fontSize: 14, height: 1.6),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.highlight,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    ),
+                    child: const Text('🚀 Lihat Paket Joki'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.secondary),
+                      foregroundColor: AppColors.secondary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    ),
+                    child: const Text('💬 Kontak WA'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: const [
+                  BadgeChip(label: 'Aman 100%'),
+                  BadgeChip(label: 'Proses Cepat'),
+                  BadgeChip(label: 'Harga Terjangkau'),
+                ],
+              ),
+            ],
+          );
+
+          final heroImage = AspectRatio(
+            aspectRatio: 4 / 3,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.secondary, AppColors.primary],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.16),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/images/hero_img.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.gamepad, size: 80, color: Colors.white),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Rank boost profesional & terpercaya',
-            style: TextStyle(color: Colors.white54, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          Image.asset(
-            'assets/images/hero_img.png',
-            width: 200,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.gamepad, size: 80, color: Color(0xFF00FFCC)),
-          ),
-        ],
+          );
+
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                heroContent,
+                const SizedBox(height: 24),
+                heroImage,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: heroContent),
+              const SizedBox(width: 16),
+              Expanded(child: heroImage),
+            ],
+          );
+        },
       ),
     );
   }
@@ -226,9 +337,9 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF020617),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'Paket Rank Boost',
             style: TextStyle(
-              color: Color(0xFF00FFCC),
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -257,68 +368,101 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _paketCard(Map<String, String> paket, dynamic harga) {
+    final isPopular = paket['label'] == 'Legend → Mythic';
     return GestureDetector(
       onTap: () => _pilihPaket(paket),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF00FFCC).withOpacity(0.15)),
+          gradient: const LinearGradient(
+            colors: [AppColors.surfaceAlt, AppColors.surfaceSoft],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border.withOpacity(0.3)),
         ),
-        child: Row(
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00FFCC).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.trending_up,
-                color: Color(0xFF00FFCC),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    paket['label']!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+            if (isPopular)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.highlight.withOpacity(0.15),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(14),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatHarga(harga),
-                    style: const TextStyle(
-                      color: Color(0xFF00FFCC),
+                  child: const Text(
+                    '🔥 Terpopuler',
+                    style: TextStyle(
+                      color: AppColors.highlight,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.trending_up,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paket['label']!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _formatHarga(harga),
+                        style: const TextStyle(
+                          color: AppColors.highlight,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Pesan',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                   ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00FFCC),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Pesan',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -342,9 +486,13 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF020617),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white12),
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.surface, AppColors.surfaceAlt],
+        ),
+        border: Border.all(color: AppColors.border.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,48 +500,52 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'Harga per Bintang (Custom)',
             style: TextStyle(
-              color: Color(0xFF00FFCC),
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           const Text(
             'Untuk order custom rank, harga dihitung per bintang',
             style: TextStyle(color: Colors.white38, fontSize: 12),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Table(
             columnWidths: const {
               0: FlexColumnWidth(2),
               1: FlexColumnWidth(2),
-              2: FlexColumnWidth(1),
             },
+            border: TableBorder.symmetric(
+              inside: BorderSide(color: AppColors.border.withOpacity(0.3)),
+            ),
             children: [
               const TableRow(
+                decoration: BoxDecoration(color: AppColors.surfaceSoft),
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(bottom: 8),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Text(
-                      'Rank',
+                      'Tier',
                       style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(bottom: 8),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Text(
-                      'Per Bintang',
+                      'Harga/Bintang',
                       style: TextStyle(color: Colors.white54, fontSize: 12),
+                      textAlign: TextAlign.right,
                     ),
                   ),
-                  SizedBox(),
                 ],
               ),
               ...starData.map(
                 (item) => TableRow(
+                  decoration: const BoxDecoration(color: AppColors.surface),
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         item['rank']!,
                         style: const TextStyle(
@@ -403,22 +555,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         _formatHarga(_settings[item['key']]),
                         style: const TextStyle(
-                          color: Color(0xFF00FFCC),
+                          color: AppColors.highlight,
                           fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
+                        textAlign: TextAlign.right,
                       ),
                     ),
-                    const SizedBox(),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -429,13 +582,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF00FFCC)),
-                foregroundColor: const Color(0xFF00FFCC),
+                side: const BorderSide(color: AppColors.secondary),
+                foregroundColor: AppColors.secondary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
               ),
-              child: const Text('Order Custom Rank'),
+              child: const Text(
+                'Order Custom Rank',
+                style: TextStyle(fontSize: 14),
+              ),
             ),
           ),
         ],
@@ -486,13 +644,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: AppColors.border.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFF00FFCC), size: 28),
+            Icon(icon, color: AppColors.primary, size: 28),
             const SizedBox(height: 8),
             Text(
               label,
