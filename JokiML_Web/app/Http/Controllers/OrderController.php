@@ -174,6 +174,15 @@ class OrderController extends Controller
 
     public function storeTestimonial(Request $request)
     {
+        if (Auth::user()->role === 'admin') {
+            return redirect()->route('dashboard')->with('error', 'Admin tidak diperbolehkan memberikan testimoni.');
+        }
+
+        $hasOrder = Order::where('user_id', Auth::id())->exists();
+        if (!$hasOrder) {
+            return redirect()->route('dashboard')->with('error', 'Anda harus memesan joki terlebih dahulu sebelum memberikan testimoni.');
+        }
+
         $request->validate([
             'content' => 'required|string|max:500',
             'rating' => 'required|integer|min:1|max:5',
@@ -185,7 +194,7 @@ class OrderController extends Controller
             'rating' => $request->input('rating'),
         ]);
 
-        return back()->with('success', 'Terima kasih atas ulasan Anda!');
+        return redirect()->route('dashboard')->with('success', 'Terima kasih atas ulasan Anda!');
     }
 
     public function updateStatus(Request $request, Order $order)

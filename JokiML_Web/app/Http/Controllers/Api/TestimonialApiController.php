@@ -18,6 +18,15 @@ class TestimonialApiController extends Controller
 
     public function store(Request $request)
     {
+        if (Auth::user()->role === 'admin') {
+            return response()->json(['message' => 'Admin tidak diperbolehkan memberikan testimoni.'], 403);
+        }
+
+        $hasOrder = \App\Models\Order::where('user_id', Auth::id())->exists();
+        if (!$hasOrder) {
+            return response()->json(['message' => 'Anda harus memesan joki terlebih dahulu sebelum memberikan testimoni.'], 403);
+        }
+
         $request->validate([
             'content' => 'required|string|max:500',
             'rating' => 'required|integer|min:1|max:5',

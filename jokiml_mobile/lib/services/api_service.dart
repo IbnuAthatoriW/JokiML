@@ -19,11 +19,11 @@ class ApiService {
   late final Dio dio;
 
   // Ganti IP ini sesuai kebutuhan:
-  // IP PC Rezza 192.168.1.5
-  // - Emulator Android bawaan  → http://10.0.2.2:8000/api
-  // - HP fisik / Genymotion    → http://<IP_LAPTOP>:8000/api
-  // - Production               → https://domain-kamu.com/api
-  static const String baseUrl = 'http://192.168.1.5:8000/api';
+  // - HP fisik Android via USB (rekomendasi: jalankan 'adb reverse tcp:8000 tcp:8000') → http://127.0.0.1:8000/api
+  // - HP fisik / Genymotion via Wi-Fi (IP PC saat ini: 192.168.0.120)                  → http://192.168.0.120:8000/api
+  // - Emulator Android bawaan                                                          → http://10.0.2.2:8000/api
+  // - Production                                                                       → https://domain-kamu.com/api
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   dynamic _decodeBody(String body) {
     try {
@@ -227,5 +227,55 @@ class ApiService {
       throw Exception(firstError is List ? firstError.first : firstError);
     }
     throw Exception(body['message'] ?? 'Gagal membuat order');
+  }
+
+  // ─── TESTIMONIALS ──────────────────────────────────────────────────────────
+
+  /// Ambil daftar testimonial
+  Future<List<Map<String, dynamic>>> getTestimonials() async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/testimonials'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = _decodeBody(response.body);
+      return data.cast<Map<String, dynamic>>();
+    }
+    throw Exception('Gagal memuat testimonial');
+  }
+
+  /// Kirim testimonial baru
+  Future<Map<String, dynamic>> submitTestimonial({
+    required String content,
+    required int rating,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/testimonials'),
+      headers: headers,
+      body: jsonEncode({'content': content, 'rating': rating}),
+    );
+
+    final body = _decodeBody(response.body);
+    if (response.statusCode == 201) {
+      return body['testimonial'];
+    }
+    throw Exception(body['message'] ?? 'Gagal mengirim testimonial');
+  }
+
+  /// Hapus testimonial
+  Future<void> deleteTestimonial(int id) async {
+    final headers = await _authHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/testimonials/$id'),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      final body = _decodeBody(response.body);
+      throw Exception(body['message'] ?? 'Gagal menghapus testimonial');
+    }
   }
 }

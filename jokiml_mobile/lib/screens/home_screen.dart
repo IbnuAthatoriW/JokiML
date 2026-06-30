@@ -3,6 +3,7 @@ import 'package:jokiml_mobile/services/api_service.dart';
 import 'package:jokiml_mobile/screens/badge_chip.dart';
 import 'package:jokiml_mobile/screens/order_screen.dart';
 import 'package:jokiml_mobile/screens/riwayat_screen.dart';
+import 'package:jokiml_mobile/screens/testimoni_screen.dart';
 import 'package:jokiml_mobile/screens/auth_screen.dart';
 import 'package:jokiml_mobile/theme.dart';
 
@@ -613,6 +614,17 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const RiwayatScreen()),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _menuCard(
+              icon: Icons.rate_review,
+              label: 'Testimoni',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TestimoniScreen()),
               ),
             ),
           ),

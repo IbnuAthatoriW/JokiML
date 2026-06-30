@@ -58,13 +58,29 @@
                 </h2>
                 
                 <div class="glass-card p-6 overflow-x-auto">
-                    @if(session('success'))
-                        <div class="mb-4 p-4 rounded-xl bg-green-500/20 border border-green-500/50 text-green-400">
-                            {{ session('success') }}
-                        </div>
-                    @endif
+    @if (session('success'))
+        <div class="mb-4 p-4 rounded-xl bg-green-500/20 border border-green-500/50 text-green-400">
+            {{ session('success') }}
+        </div>
+    @endif
 
-                    @if($orders->isEmpty())
+    @if (session('error'))
+        <div class="mb-4 p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400">
+            <ul class="list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if($orders->isEmpty())
                         <p class="text-gray-400 text-center py-4">Belum ada order.</p>
                     @else
                         <table class="w-full text-sm text-left">
@@ -514,7 +530,8 @@
                     @endforelse
                 </div>
 
-                <div class="glass-card p-6 md:w-1/2 mx-auto">
+                @if(Auth::user()->role !== 'admin' && $orders->isNotEmpty())
+                <div class="glass-card p-6 md:w-1/2 mx-auto text-left">
                     <h3 class="font-bold text-white mb-4">Tambahkan Testimoni Anda</h3>
                     <form action="{{ route('testimonial.store') }}" method="POST">
                         @csrf
@@ -535,6 +552,7 @@
                         <button type="submit" class="btn-neon w-full text-sm py-2">Kirim Testimoni</button>
                     </form>
                 </div>
+                @endif
             </div>
 
         </div>
